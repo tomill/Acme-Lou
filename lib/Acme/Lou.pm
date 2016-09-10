@@ -7,7 +7,6 @@ use Acme::Lou::Effect;
 use Carp;
 use DB_File;
 use Encode;
-use HTML::Parser;
 use Text::MeCab;
 
 sub new {
@@ -22,10 +21,7 @@ sub new {
             $file =~ s{\.pm$}{/lou-ja2kana.db};
             $file;
         },
-        format       => '%s',
-        is_html      => 0,
         lou_rate     => 100,
-        html_fx_rate => 0,
         %$opt,
     );
     
@@ -56,18 +52,13 @@ sub translate {
     utf8::decode($text) unless utf8::is_utf8($text);
     
     $opt = {
-        format       => $self->{format},
-        is_html      => $self->{is_html},
         lou_rate     => $self->{lou_rate},
-        html_fx_rate => $self->{html_fx_rate},
         use_emoji => $self->{use_emoji},
         %{ $opt || {} },
     };
 
     if (!$opt->{lou_rate}) {
         return $text;
-    } elsif ($opt->{is_html} || $opt->{html_fx_rate}) {
-        return $self->html_parse($text, $opt);
     } else {
         return $self->lou($text, $opt);
     }
@@ -145,17 +136,6 @@ sub lou {
                 $n->{cform} = "";
             }
            
-            if ($n->{to} eq "トゥギャザー") {
-                $n->{to} = Acme::Lou::Effect::html_fx2($n->{to})
-                    if $opt->{html_fx_rate};
-            }
-            elsif (int(rand 100) < $opt->{html_fx_rate}) {
-                if ($opt->{use_emoji} && int(rand 100) < $opt->{html_fx_rate} - 10) {
-                    $n->{to} = Acme::Lou::Effect::html_fx_emoji($n->{to});
-                } else {
-                    $n->{to} = Acme::Lou::Effect::html_fx($n->{to});
-                }
-            }
             $n->{to} .= $n->{cform};
 
             push @out, sprintf($opt->{format}, $n->{to}, $n->{surface});
@@ -195,46 +175,6 @@ sub decode_node {
     $n;
 }
 
-sub html_parse {
-    my ($self, $html, $opt) = @_;
-    my $return = "";
-    
-    my $p = new HTML::Parser( api_version => 3 );
-    my %in;
-    
-    $p->handler( default => reverse
-        'text,tagname,event' => sub {
-            my ($text, $tag, $event) = @_;
-            $return .= $text;
-            $tag ||= '';
-            $in{$tag}++ if $event eq 'start';
-            $in{$tag}-- if $event eq 'end';
-        }
-    );
-    
-    $p->handler( text => reverse
-        'text' => sub {
-            my ($text) = @_;
-            if ($in{script} || $in{style}) {
-                $return .= $text;
-                return;
-            }
-            $return .= $self->lou($text, {
-                format       => $opt->{format},
-                use_emoji     => $opt->{use_emoji},
-                lou_rate     => $opt->{lou_rate},
-                html_fx_rate => $in{title} ? 0 : $opt->{html_fx_rate},
-            });
-        }
-    );
-     
-    chomp $html;
-    $p->parse("$html\n") or croak "Parser failed. $!";
-    $p->eof;
-     
-    $return;
-}
-
 1;
 __END__
 
@@ -257,14 +197,13 @@ Acme::Lou - Let's together with Lou Ohshiba
 
     print $lou->translate($text, {
         lou_rate     =>  50,
-        html_fx_rate => 100,
     })
     # 「美しい国、<FONT color=#003399>ジャパン</FONT>」
 
 =head1 DESCRIPTION
 
 Mr. Lou Ohshiba is a Japanese comedian. This module translates 
-text or HTML into his style. 
+text into his style. 
 
 =head1 METHODS
 
@@ -299,22 +238,13 @@ Optional. Arguments for L<Text::MeCab> instance.
 
 You can set your own Text::MeCab instance, if you want. Optional. 
 
-=item * format
-
-=item * is_html 
-
 =item * lou_rate
-
-=item * html_fx_rate
 
 These are global options for C<< $lou->translate() >> (See below).
 
 Defaults are 
 
-    format       => '%s',
-    is_html      => 0,
     lou_rate     => 100,
-    html_fx_rate => 0,
 
 =back
 
@@ -327,83 +257,22 @@ I<%options>: (overwrite global options)
 
 =over 4
 
-=item * format 
-
-Output format string for C<sprintf>. Default is C<%s>.
-It is taken as follows. 
-
-    sprintf(C<format>, "translated word", "original word")
-
-e.g.
-    
-    Default:
-    $lou->translate("考えておく");
-    # シンクアバウトしておく
-     
-    Idea 1: <ruby> tag
-    $lou->translate("考えておく", { 
-        format => '<ruby><rb>%s</rb><rp>(</rp><rt>%s</rt><rp>)</rp></ruby>',
-    });
-    # <ruby><rb>シンクアバウトし</rb><rp>(</rp><rt>考え</rt><rp>)</rp></ruby>ておく
-     
-    Idea 2: for English study (?!)
-    $lou->translate("考えておく", { 
-        format => '%2$s[%1$s]', # require perl v5.8
-    });
-    # 考え[シンクアバウトし]ておく
-
-C<format> option was added by version 0.03.
-
-=item * is_html
-
-Optional. If $text is a HTML, you should set true. Acme::Lou makes 
-a fine job with HTML::Parser mode. Default is false. 
-
 =item * lou_rate
 
 Set percentage of translating. 100 means full translating, 
 0 means do nothing.
 
-=item * html_fx_rate
-
-Set percentage of HTML style decoration. Default is 0. 
-When C<html_fx_rate> is set, using HTML::Parser automatically.
-(don't need to set C<is_html>)
+=back
 
 =back
 
-If using HTML::Parser, C<translate()> skips the text in C<< <script> >> 
-and C<< <style> >> tag and attribute values.
+=head1 OBSOLETED FUNCTION
 
-And, C<html_fx_rate> skips the text in C<< <title> >> tag.
+To keep this module working, following functions are obsoleted. sorry.
 
-    my $html = <<'HTML';
-    <html>
-    <head><title>新年のごあいさつ></title></head>
-    <body>
-    <img src="foo.jpg" alt="新年" />
-    今年もよろしく
-    お願いいたします。
-    </body>
-    </html>
-    HTML
-    ;
-     
-    print $lou->translate($html, {
-        lou_rate => 100, # translate all words that Acme::Lou knows.
-        html_fx_rate => 100, # and decorate all words.
-    });
-      
-    # <html>
-    # <head><title>ニューイヤーのごあいさつ</title></head>
-    # <body>
-    # <img src="foo.jpg" alt="新年" />
-    # <FONT color=#0000ff size=5>ディスイヤー</FONT>もよろしく
-    # <FONT color=#df0029 size=6><STRONG>プリーズ</STRONG></FONT>いたします
-    # </body>
-    # </html>
+=over
 
-HTML is not broken.
+=item * html input/output
 
 =back
 
