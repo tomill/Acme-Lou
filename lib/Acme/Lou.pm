@@ -118,7 +118,7 @@ sub lou {
     $text = encode($self->{mecab_charset}, $text);
     my @out;
     my $node = $self->mecab->parse($text);
-    while ($node = $node->next) {
+    while ($node) {
        
         my $n = $self->decode_node($node);
         $n->{to} = $self->dic($n->{original});
@@ -162,6 +162,7 @@ sub lou {
         } else {
             push @out, $n->{surface};
         }
+        $node = $node->next;
     }
     $text = join "", @out;
     $text =~ s/\r/\n/g;
