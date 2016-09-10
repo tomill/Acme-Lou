@@ -411,14 +411,15 @@ HTML is not broken.
 
 Naoki Tomita E<lt>tomita@cpan.orgE<gt>
 
+=head1 SEE ALSO
+
+L<http://lou5.jp/>, L<http://mecab.sourceforge.jp/>
+
 Special thanks to Taku Kudo
 
 =head1 LICENSE
 
-This program is released under the following license: GPL
-
-=head1 SEE ALSO
-
-L<http://lou5.jp/>, L<http://mecab.sourceforge.jp/>
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
 
 =cut
