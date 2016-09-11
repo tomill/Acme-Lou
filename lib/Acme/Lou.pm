@@ -3,7 +3,7 @@ use 5.010001;
 use strict;
 use warnings;
 use utf8;
-our $VERSION = '0.033';
+our $VERSION = '0.04';
 
 use Exporter 'import';
 use Encode;
