@@ -31,3 +31,5 @@ minil.toml
 MYMETA.*
 
 /Acme-Lou-*
+
+mecab-ipadic-*
