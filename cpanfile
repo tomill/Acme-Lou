@@ -1,8 +1,10 @@
-requires 'Encode';
-requires 'HTML::Parser';
-requires 'Test::More';
-requires 'Text::MeCab';
+requires 'perl', '5.010001';
 
-on build => sub {
-    requires 'ExtUtils::MakeMaker';
+requires 'Encode';
+requires 'File::ShareDir';
+requires 'Text::Mecabist';
+
+on test => sub {
+    requires 'Test::More';
+    requires 'Test::Base';
 };
