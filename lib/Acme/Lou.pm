@@ -5,9 +5,17 @@ use warnings;
 use utf8;
 our $VERSION = '0.033';
 
+use Exporter 'import';
 use Encode;
 use File::ShareDir qw/dist_file/;
 use Text::Mecabist;
+
+our @EXPORT_OK = qw/lou/;
+
+sub lou {
+    my $text = shift || "";
+    return Acme::Lou->new->translate($text);
+}
 
 sub new {
     my $class = shift;
@@ -48,7 +56,7 @@ sub translate {
         }
 
         $node->text($word . $okuri);
-    })->stringify;
+    })->stringify();
 }
 
 1;
@@ -63,84 +71,61 @@ Acme::Lou - Let's together with Lou Ohshiba
 =head1 SYNOPSIS
 
     use utf8;
-    use Acme::Lou;
-    
-    my $lou = new Acme::Lou;
-    
-    my $text = "「美しい国、日本」";
-    
-    print $lou->translate($text); # 「ビューティフルな国、ジャパン」
+    use Acme::Lou qw/lou/;
 
-    print $lou->translate($text, {
-        lou_rate     =>  50,
-    })
-    # 「美しい国、<FONT color=#003399>ジャパン</FONT>」
+    my $text = <<'...';
+    祇園精舎の鐘の声、諸行無常の響きあり。
+    沙羅双樹の花の色、盛者必衰の理を現す。
+    奢れる人も久しからず、
+    唯春の夜の夢のごとし。
+    ...
+
+    print lou($text);
+
+    # 祇園テンプルのベルのボイス、諸行無常のエコーあり。
+    # 沙羅双樹のフラワーのカラー、盛者必衰のリーズンをショーする。
+    # プラウドすれるヒューマンも久しからず、
+    # オンリースプリングのイーブニングのドリームのごとし。
 
 =head1 DESCRIPTION
 
-Mr. Lou Ohshiba is a Japanese comedian. This module translates 
-text into his style. 
+Translate Japanese text into Lou Ohshiba (Japanese comedian) style. 
 
 =head1 METHODS
 
-=over 4
-
-=item $lou = Acme::Lou->new([ \%options ])
-
-=item $lou = Acme::Lou->new([ %options ]) 
+=head2 $lou = Acme::Lou->new() 
 
 Creates an Acme::Lou object.
 
-I<%options> can take...
+=head2 $lou->translate($text [, \%options ])
 
-=over 4 
+    $lou = Acme->Lou->new();
+    $out = $lou->translate($text, { lou_rate => 50 });
 
-=item * mecab_charset 
+Return translated unicode string.
 
-Your MeCab dictionary charset. Default is C<euc-jp>. If you compiled 
-mecab with C<utf-8>,
-
-    my $lou = new Acme::Lou( mecab_charset => 'utf-8' );
-
-=item * mecab_option
-
-Optional. Arguments for L<Text::MeCab> instance.
-
-    my $lou = new Acme::Lou({ 
-        mecab_option => { dicdir => "/path/to/yourdicdir" },
-    });
-
-=item * mecab
-
-You can set your own Text::MeCab instance, if you want. Optional. 
-
-=item * lou_rate
-
-These are global options for C<< $lou->translate() >> (See below).
-
-Defaults are 
-
-    lou_rate     => 100,
-
-=back
-
-=item $lou->translate($text [, \%options ])
-
-Return translated text in Lou Ohshiba style. C<translate()> expect 
-utf-8 byte or utf-8 flagged text, and it return utf-8 flaged text.
-
-I<%options>: (overwrite global options)
+I<%options>:
 
 =over 4
 
 =item * lou_rate
 
-Set percentage of translating. 100 means full translating, 
-0 means do nothing.
+Percentage of translating. 100(default) means full, 0 means do nothing.
 
 =back
 
-=back
+=head1 EXPORTS
+
+No exports by default.
+
+=head2 lou
+
+    use Acme::Lou qw/lou/;
+
+    print lou("人生には、大切にしなくてはいけない三つの袋があります。");
+    # => ライフには、インポータントにしなくてはいけない三つのバッグがあります。
+
+Shortcut to C<Acme::Lou->new->translate()>.
 
 =head1 OBSOLETED FUNCTION
 
@@ -166,5 +151,7 @@ Special thanks to Taku Kudo
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
+
+=for stopwords lou ohshiba unicode html
 
 =cut
